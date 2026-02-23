@@ -168,7 +168,9 @@ static void draw_lcd_content(GContext *ctx) {
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
 
   // === TOP ROW: Day + Date ===
-  int16_t top_y = LCD_Y + 4;
+  // Center content block vertically within LCD panel
+  int16_t content_h = 70; // day row + divider + gap + time + seconds
+  int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
 
   // Day of week
   graphics_draw_text(ctx, DAYS[t->tm_wday], font_small,
