@@ -106,7 +106,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   // Row 2: Blue stripe is the blue border drawn in draw_lcd_panel
 
   // Row 3: Red arrow + "LIGHT" on left, "ALARM CHRONOGRAPH" on right
-  int16_t row3_y = 26;
+  int16_t row3_y = 34;
 
   // Small red left-pointing arrow (triangle approximation using rects)
   graphics_context_set_fill_color(ctx, COLOR_RED);
@@ -155,7 +155,7 @@ static void draw_lcd_panel(GContext *ctx) {
   // Blue stripe between CASIO row and LIGHT row
   graphics_context_set_fill_color(ctx, COLOR_BLUE);
   graphics_fill_rect(ctx,
-    GRect(LCD_X - BLUE_PAD, 23,
+    GRect(LCD_X - BLUE_PAD, 27,
           LCD_W + BLUE_PAD * 2, 4),
     0, GCornerNone);
 
