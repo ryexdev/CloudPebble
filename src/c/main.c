@@ -17,6 +17,7 @@ static const char *DAYS[] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
   #define COLOR_DIM        GColorFromHEX(0x5A5C60)
   #define COLOR_RED        GColorFromHEX(0xAA231E)
   #define COLOR_CASIO_BLUE GColorFromHEX(0x193787)
+  #define COLOR_GOLD       GColorFromHEX(0xC8A850)
   #define COLOR_WHITE      GColorWhite
   #define COLOR_BLACK       GColorBlack
 #else
@@ -29,6 +30,7 @@ static const char *DAYS[] = {"SU", "MO", "TU", "WE", "TH", "FR", "SA"};
   #define COLOR_DIM        GColorDarkGray
   #define COLOR_RED         GColorBlack
   #define COLOR_CASIO_BLUE GColorBlack
+  #define COLOR_GOLD       GColorLightGray
   #define COLOR_WHITE      GColorWhite
   #define COLOR_BLACK       GColorBlack
 #endif
@@ -71,8 +73,8 @@ static void draw_bezel(GContext *ctx, GRect bounds) {
   int16_t w = bounds.size.w;
   int16_t h = bounds.size.h;
 
-  // Black outer
-  graphics_context_set_fill_color(ctx, COLOR_BLACK);
+  // Blue outer border
+  graphics_context_set_fill_color(ctx, COLOR_BLUE);
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 
   // Dark bezel body
@@ -99,6 +101,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   graphics_draw_text(ctx, "CASIO", font_casio,
     GRect(LCD_X, 6, LCD_W / 2, 24),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_context_set_text_color(ctx, COLOR_GOLD);
   graphics_draw_text(ctx, "F-91W", font_small,
     GRect(LCD_X + LCD_W / 2, 10, LCD_W / 2, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
@@ -121,6 +124,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
   // "ALARM CHRONOGRAPH" right side
+  graphics_context_set_text_color(ctx, COLOR_GOLD);
   graphics_draw_text(ctx, "ALARM CHRONOGRAPH", font_tiny,
     GRect(LCD_X, row3_y, LCD_W, 16),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
