@@ -170,98 +170,124 @@ static const uint8_t SEG_MAP[] = {
   0x6F, // 9: a,b,c,d,f,g
 };
 
-static void draw_seg_digit(GContext *ctx, int d, int16_t x, int16_t y,
-                           int16_t w, int16_t h, int16_t t) {
-  if (d < 0 || d > 9) return;
-  uint8_t s = SEG_MAP[d];
+// Core: draw arbitrary segment pattern
+static void draw_seg_pattern(GContext *ctx, uint8_t segs, int16_t x, int16_t y,
+                             int16_t sw, int16_t sh, int16_t st) {
   int16_t g = 1;
-  int16_t vl = (h - 3 * t) / 2;
-  int16_t my = y + t + vl;
-  int16_t by = y + h - t;
+  int16_t vl = (sh - 3 * st) / 2;
+  int16_t my = y + st + vl;
+  int16_t by = y + sh - st;
 
-  if (s & 0x01) graphics_fill_rect(ctx, GRect(x+g, y, w-2*g, t), 0, GCornerNone);
-  if (s & 0x40) graphics_fill_rect(ctx, GRect(x+g, my, w-2*g, t), 0, GCornerNone);
-  if (s & 0x08) graphics_fill_rect(ctx, GRect(x+g, by, w-2*g, t), 0, GCornerNone);
-  if (s & 0x20) graphics_fill_rect(ctx, GRect(x, y+t+g, t, vl-2*g), 0, GCornerNone);
-  if (s & 0x02) graphics_fill_rect(ctx, GRect(x+w-t, y+t+g, t, vl-2*g), 0, GCornerNone);
-  if (s & 0x10) graphics_fill_rect(ctx, GRect(x, my+t+g, t, vl-2*g), 0, GCornerNone);
-  if (s & 0x04) graphics_fill_rect(ctx, GRect(x+w-t, my+t+g, t, vl-2*g), 0, GCornerNone);
+  if (segs & 0x01) graphics_fill_rect(ctx, GRect(x+g, y, sw-2*g, st), 0, GCornerNone);
+  if (segs & 0x40) graphics_fill_rect(ctx, GRect(x+g, my, sw-2*g, st), 0, GCornerNone);
+  if (segs & 0x08) graphics_fill_rect(ctx, GRect(x+g, by, sw-2*g, st), 0, GCornerNone);
+  if (segs & 0x20) graphics_fill_rect(ctx, GRect(x, y+st+g, st, vl-2*g), 0, GCornerNone);
+  if (segs & 0x02) graphics_fill_rect(ctx, GRect(x+sw-st, y+st+g, st, vl-2*g), 0, GCornerNone);
+  if (segs & 0x10) graphics_fill_rect(ctx, GRect(x, my+st+g, st, vl-2*g), 0, GCornerNone);
+  if (segs & 0x04) graphics_fill_rect(ctx, GRect(x+sw-st, my+st+g, st, vl-2*g), 0, GCornerNone);
 }
 
-static void draw_seg_colon(GContext *ctx, int16_t x, int16_t y, int16_t h, int16_t t) {
-  int16_t q = h / 4;
-  graphics_fill_rect(ctx, GRect(x, y + q, t, t), 0, GCornerNone);
-  graphics_fill_rect(ctx, GRect(x, y + 3 * q - t, t, t), 0, GCornerNone);
+static void draw_seg_digit(GContext *ctx, int d, int16_t x, int16_t y,
+                           int16_t sw, int16_t sh, int16_t st) {
+  if (d < 0 || d > 9) return;
+  draw_seg_pattern(ctx, SEG_MAP[d], x, y, sw, sh, st);
+}
+
+// 7-segment letter approximations for day/AM/PM
+static uint8_t letter_segs(char c) {
+  switch(c) {
+    case 'A': return 0x77; // a,b,c,e,f,g
+    case 'E': return 0x79; // a,d,e,f,g
+    case 'F': return 0x71; // a,e,f,g
+    case 'H': return 0x76; // b,c,e,f,g
+    case 'M': return 0x37; // a,b,c,e,f
+    case 'O': return 0x3F; // a,b,c,d,e,f
+    case 'P': return 0x73; // a,b,e,f,g
+    case 'R': return 0x50; // e,g
+    case 'S': return 0x6D; // a,c,d,f,g
+    case 'T': return 0x78; // d,e,f,g
+    case 'U': return 0x3E; // b,c,d,e,f
+    case 'W': return 0x1C; // c,d,e
+    default:  return 0x00;
+  }
+}
+
+static void draw_seg_colon(GContext *ctx, int16_t x, int16_t y, int16_t sh, int16_t st) {
+  int16_t q = sh / 4;
+  graphics_fill_rect(ctx, GRect(x, y + q, st, st), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(x, y + 3 * q - st, st, st), 0, GCornerNone);
 }
 
 static void draw_seg_dash(GContext *ctx, int16_t x, int16_t y,
-                          int16_t w, int16_t h, int16_t t) {
-  int16_t vl = (h - 3 * t) / 2;
-  int16_t my = y + t + vl;
-  graphics_fill_rect(ctx, GRect(x, my, w, t), 0, GCornerNone);
+                          int16_t sw, int16_t sh, int16_t st) {
+  int16_t vl = (sh - 3 * st) / 2;
+  int16_t my = y + st + vl;
+  graphics_fill_rect(ctx, GRect(x, my, sw, st), 0, GCornerNone);
 }
 
 static void draw_lcd_content(GContext *ctx) {
   time_t temp = time(NULL);
   struct tm *t = localtime(&temp);
 
-  GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
-
-  graphics_context_set_text_color(ctx, COLOR_LCD_FG);
   graphics_context_set_fill_color(ctx, COLOR_LCD_FG);
 
   // Main time digit sizes (bigger, bolder)
   int16_t dw = 24, dh = 42, dt = 5;
   // Seconds digit sizes
-  int16_t sw = 14, sh = 24, st = 3;
-  // Date digit sizes
-  int16_t ddw = 9, ddh = 16, ddt = 2;
+  int16_t secw = 14, sech = 24, sect = 3;
+  // Top row character sizes (day, date, AM/PM)
+  int16_t tw = 8, th = 14, tt = 2;
   // Spacing
-  int16_t dgap = 2, cgap = 2, cw = 5;
-  int16_t sgap = 1, spad = 4;
-  int16_t ddgap = 1, dash_w = 6;
+  int16_t dgap = 2, cgap = 2, colw = 5;
+  int16_t secgap = 1, secpad = 4;
+  int16_t tgap = 1, dashw = 5;
 
   // Total width: HH:MM + padding + SS
-  int16_t time_w = 4 * dw + 2 * dgap + 2 * cgap + cw;
-  int16_t secs_w = 2 * sw + sgap;
-  int16_t total_w = time_w + spad + secs_w;
+  int16_t time_w = 4 * dw + 2 * dgap + 2 * cgap + colw;
+  int16_t secs_w = 2 * secw + secgap;
+  int16_t total_w = time_w + secpad + secs_w;
 
   // Vertical centering
-  int16_t top_row_h = 20;
+  int16_t top_row_h = 18;
   int16_t div_gap = 4;
   int16_t content_h = top_row_h + div_gap + dh;
   int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
+  int16_t char_y = top_y + (top_row_h - th) / 2;
 
-  // === TOP ROW ===
-  // Day of week - centered (text font since these are letters)
-  graphics_draw_text(ctx, DAYS[t->tm_wday], font_label,
-    GRect(LCD_X, top_y, LCD_W, 20),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-
+  // === TOP ROW (all 7-segment) ===
   // AM/PM - left side
-  graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
-    GRect(LCD_X + 4, top_y, 30, 20),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  const char *ampm = t->tm_hour < 12 ? "AM" : "PM";
+  int16_t ax = LCD_X + 4;
+  draw_seg_pattern(ctx, letter_segs(ampm[0]), ax, char_y, tw, th, tt);
+  ax += tw + tgap;
+  draw_seg_pattern(ctx, letter_segs(ampm[1]), ax, char_y, tw, th, tt);
+
+  // Day of week - centered
+  const char *day = DAYS[t->tm_wday];
+  int16_t day_w = 2 * tw + tgap;
+  int16_t day_x = LCD_X + (LCD_W - day_w) / 2;
+  draw_seg_pattern(ctx, letter_segs(day[0]), day_x, char_y, tw, th, tt);
+  day_x += tw + tgap;
+  draw_seg_pattern(ctx, letter_segs(day[1]), day_x, char_y, tw, th, tt);
 
   // Date - right side, 7-segment digits
   int16_t month = t->tm_mon + 1;
   int16_t mday = t->tm_mday;
   int16_t m_digits = month >= 10 ? 2 : 1;
-  int16_t date_total_w = (m_digits + 2) * ddw + dash_w + (m_digits + 2) * ddgap;
-  int16_t date_y = top_y + (top_row_h - ddh) / 2;
-  int16_t dx = LCD_X + LCD_W - 6 - date_total_w;
+  int16_t date_total_w = (m_digits + 2) * tw + dashw + (m_digits + 2) * tgap;
+  int16_t dx = LCD_X + LCD_W - 4 - date_total_w;
 
   if (month >= 10) {
-    draw_seg_digit(ctx, month / 10, dx, date_y, ddw, ddh, ddt);
-    dx += ddw + ddgap;
+    draw_seg_digit(ctx, month / 10, dx, char_y, tw, th, tt);
+    dx += tw + tgap;
   }
-  draw_seg_digit(ctx, month % 10, dx, date_y, ddw, ddh, ddt);
-  dx += ddw + ddgap;
-  draw_seg_dash(ctx, dx, date_y, dash_w, ddh, ddt);
-  dx += dash_w + ddgap;
-  draw_seg_digit(ctx, mday / 10, dx, date_y, ddw, ddh, ddt);
-  dx += ddw + ddgap;
-  draw_seg_digit(ctx, mday % 10, dx, date_y, ddw, ddh, ddt);
+  draw_seg_digit(ctx, month % 10, dx, char_y, tw, th, tt);
+  dx += tw + tgap;
+  draw_seg_dash(ctx, dx, char_y, dashw, th, tt);
+  dx += dashw + tgap;
+  draw_seg_digit(ctx, mday / 10, dx, char_y, tw, th, tt);
+  dx += tw + tgap;
+  draw_seg_digit(ctx, mday % 10, dx, char_y, tw, th, tt);
 
   // Divider line
   int16_t div_y = top_y + top_row_h;
@@ -296,7 +322,7 @@ static void draw_lcd_content(GContext *ctx) {
 
   // Colon
   draw_seg_colon(ctx, cx, time_y, dh, dt);
-  cx += cw + cgap;
+  cx += colw + cgap;
 
   // M1
   draw_seg_digit(ctx, m1, cx, time_y, dw, dh, dt);
@@ -304,13 +330,13 @@ static void draw_lcd_content(GContext *ctx) {
 
   // M2
   draw_seg_digit(ctx, m2, cx, time_y, dw, dh, dt);
-  cx += dw + spad;
+  cx += dw + secpad;
 
   // Seconds - bottom-aligned with main time, 7-segment
-  int16_t sec_y = time_y + dh - sh;
-  draw_seg_digit(ctx, s1, cx, sec_y, sw, sh, st);
-  cx += sw + sgap;
-  draw_seg_digit(ctx, s2, cx, sec_y, sw, sh, st);
+  int16_t sec_y = time_y + dh - sech;
+  draw_seg_digit(ctx, s1, cx, sec_y, secw, sech, sect);
+  cx += secw + secgap;
+  draw_seg_digit(ctx, s2, cx, sec_y, secw, sech, sect);
 }
 
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
