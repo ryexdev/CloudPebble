@@ -158,30 +158,36 @@ static void draw_lcd_content(GContext *ctx) {
   time_t temp = time(NULL);
   struct tm *t = localtime(&temp);
 
-  GFont font_big = fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD);
-  GFont font_med = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
-  GFont font_small = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  GFont font_time = fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS);
+  GFont font_sec = fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS);
+  GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
 
-  int16_t cx = LCD_X + 8;
-  int16_t cw = LCD_W - 16;
+  int16_t pad = 6;
 
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
 
   // === TOP ROW: Day + Date ===
   // Center content block vertically within LCD panel
-  int16_t content_h = 70; // day row + divider + gap + time + seconds
+  int16_t content_h = 74;
   int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
 
-  // Day of week
-  graphics_draw_text(ctx, DAYS[t->tm_wday], font_small,
-    GRect(cx, top_y, 40, 22),
+  // Day of week (uses Gothic since LECO has no letters)
+  graphics_draw_text(ctx, DAYS[t->tm_wday], font_label,
+    GRect(LCD_X + pad, top_y, 40, 22),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
-  // Date: month-day (e.g. "1-25") like the real F-91W
+  // AM/PM indicator (only in 12h mode, between day and date)
+  if (!clock_is_24h_style()) {
+    graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
+      GRect(LCD_X, top_y, LCD_W, 22),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  }
+
+  // Date: month-day (e.g. "1-25")
   static char date_buf[8];
   snprintf(date_buf, sizeof(date_buf), "%d-%02d", t->tm_mon + 1, t->tm_mday);
-  graphics_draw_text(ctx, date_buf, font_small,
-    GRect(LCD_X + LCD_W - 64, top_y, 56, 22),
+  graphics_draw_text(ctx, date_buf, font_label,
+    GRect(LCD_X + LCD_W - 64 - pad, top_y, 64, 22),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
   // Divider line
@@ -191,25 +197,25 @@ static void draw_lcd_content(GContext *ctx) {
     GPoint(LCD_X + 3, div1_y),
     GPoint(LCD_X + LCD_W - 3, div1_y));
 
-  // === MAIN TIME ===
-  int16_t time_y = div1_y + 4;
+  // === MAIN TIME (centered) ===
+  int16_t time_y = div1_y + 2;
 
   static char time_buf[6];
   strftime(time_buf, sizeof(time_buf),
     clock_is_24h_style() ? "%H:%M" : "%I:%M", t);
 
-  // Draw time left-aligned with room for seconds
-  graphics_draw_text(ctx, time_buf, font_big,
-    GRect(cx - 4, time_y - 6, cw - 30, 50),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  // Time centered in area leaving room for seconds on the right
+  graphics_draw_text(ctx, time_buf, font_time,
+    GRect(LCD_X, time_y, LCD_W - 34, 50),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
-  // Seconds to the right, aligned to bottom of time
+  // Seconds right-aligned, bottom-aligned with time
   static char sec_buf[4];
   snprintf(sec_buf, sizeof(sec_buf), "%02d", t->tm_sec);
 
-  int16_t sec_y = time_y + 22;
-  graphics_draw_text(ctx, sec_buf, font_small,
-    GRect(LCD_X + LCD_W - 36, sec_y, 28, 22),
+  int16_t sec_y = time_y + 24;
+  graphics_draw_text(ctx, sec_buf, font_sec,
+    GRect(LCD_X + LCD_W - 34 - pad, sec_y, 34, 24),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 }
 
