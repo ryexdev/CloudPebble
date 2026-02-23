@@ -154,69 +154,140 @@ static void draw_lcd_panel(GContext *ctx) {
   graphics_fill_rect(ctx, GRect(LCD_X, LCD_Y, LCD_W, LCD_H), 0, GCornerNone);
 }
 
+// === 7-segment display rendering ===
+
+// Segment bitmask: a=top, b=upper-right, c=lower-right, d=bottom, e=lower-left, f=upper-left, g=middle
+static const uint8_t SEG_MAP[] = {
+  0x3F, // 0: a,b,c,d,e,f
+  0x06, // 1: b,c
+  0x5B, // 2: a,b,d,e,g
+  0x4F, // 3: a,b,c,d,g
+  0x66, // 4: b,c,f,g
+  0x6D, // 5: a,c,d,f,g
+  0x7D, // 6: a,c,d,e,f,g
+  0x07, // 7: a,b,c
+  0x7F, // 8: all
+  0x6F, // 9: a,b,c,d,f,g
+};
+
+static void draw_seg_digit(GContext *ctx, int d, int16_t x, int16_t y,
+                           int16_t w, int16_t h, int16_t t) {
+  if (d < 0 || d > 9) return;
+  uint8_t s = SEG_MAP[d];
+  int16_t g = 1;
+  int16_t vl = (h - 3 * t) / 2;
+  int16_t my = y + t + vl;
+  int16_t by = y + h - t;
+
+  if (s & 0x01) graphics_fill_rect(ctx, GRect(x+g, y, w-2*g, t), 0, GCornerNone);
+  if (s & 0x40) graphics_fill_rect(ctx, GRect(x+g, my, w-2*g, t), 0, GCornerNone);
+  if (s & 0x08) graphics_fill_rect(ctx, GRect(x+g, by, w-2*g, t), 0, GCornerNone);
+  if (s & 0x20) graphics_fill_rect(ctx, GRect(x, y+t+g, t, vl-2*g), 0, GCornerNone);
+  if (s & 0x02) graphics_fill_rect(ctx, GRect(x+w-t, y+t+g, t, vl-2*g), 0, GCornerNone);
+  if (s & 0x10) graphics_fill_rect(ctx, GRect(x, my+t+g, t, vl-2*g), 0, GCornerNone);
+  if (s & 0x04) graphics_fill_rect(ctx, GRect(x+w-t, my+t+g, t, vl-2*g), 0, GCornerNone);
+}
+
+static void draw_seg_colon(GContext *ctx, int16_t x, int16_t y, int16_t h, int16_t t) {
+  int16_t q = h / 4;
+  graphics_fill_rect(ctx, GRect(x, y + q, t, t), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(x, y + 3 * q - t, t, t), 0, GCornerNone);
+}
+
 static void draw_lcd_content(GContext *ctx) {
   time_t temp = time(NULL);
   struct tm *t = localtime(&temp);
 
-  GFont font_time = fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS);
-  GFont font_sec = fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS);
   GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
 
-  int16_t pad = 6;
-
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
+  graphics_context_set_fill_color(ctx, COLOR_LCD_FG);
 
-  // === TOP ROW: Day + Date ===
-  // Center content block vertically within LCD panel
-  int16_t content_h = 74;
+  // Main digit sizes
+  int16_t dw = 18, dh = 38, dt = 4;
+  // Seconds digit sizes
+  int16_t sw = 10, sh = 20, st = 2;
+  // Spacing
+  int16_t dgap = 2, cgap = 3, cw = 4;
+  int16_t sgap = 1, spad = 5;
+
+  // Total width: HH:MM + padding + SS
+  int16_t time_w = 4 * dw + 2 * dgap + 2 * cgap + cw;
+  int16_t secs_w = 2 * sw + sgap;
+  int16_t total_w = time_w + spad + secs_w;
+
+  // Vertical centering
+  int16_t top_row_h = 20;
+  int16_t div_gap = 4;
+  int16_t content_h = top_row_h + div_gap + dh;
   int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
 
-  // Day of week (uses Gothic since LECO has no letters)
+  // === TOP ROW ===
+  // Day of week - centered
   graphics_draw_text(ctx, DAYS[t->tm_wday], font_label,
-    GRect(LCD_X + pad, top_y, 40, 22),
+    GRect(LCD_X, top_y, LCD_W, 20),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+  // AM/PM - left side
+  graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
+    GRect(LCD_X + 4, top_y, 30, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
-  // AM/PM indicator (only in 12h mode, between day and date)
-  if (!clock_is_24h_style()) {
-    graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
-      GRect(LCD_X, top_y, LCD_W, 22),
-      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  }
-
-  // Date: month-day (e.g. "1-25")
+  // Date - right side
   static char date_buf[8];
   snprintf(date_buf, sizeof(date_buf), "%d-%02d", t->tm_mon + 1, t->tm_mday);
   graphics_draw_text(ctx, date_buf, font_label,
-    GRect(LCD_X + LCD_W - 64 - pad, top_y, 64, 22),
+    GRect(LCD_X + LCD_W - 68, top_y, 64, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
   // Divider line
-  int16_t div1_y = top_y + 22;
+  int16_t div_y = top_y + top_row_h;
   graphics_context_set_stroke_color(ctx, COLOR_LCD_FG);
   graphics_draw_line(ctx,
-    GPoint(LCD_X + 3, div1_y),
-    GPoint(LCD_X + LCD_W - 3, div1_y));
+    GPoint(LCD_X + 3, div_y),
+    GPoint(LCD_X + LCD_W - 3, div_y));
 
-  // === MAIN TIME (centered) ===
-  int16_t time_y = div1_y + 2;
+  // === MAIN TIME (7-segment, centered) ===
+  int16_t time_y = div_y + div_gap;
 
-  static char time_buf[6];
-  strftime(time_buf, sizeof(time_buf),
-    clock_is_24h_style() ? "%H:%M" : "%I:%M", t);
+  // 12-hour format always
+  int16_t hour = t->tm_hour % 12;
+  if (hour == 0) hour = 12;
+  int16_t h1 = hour / 10;
+  int16_t h2 = hour % 10;
+  int16_t m1 = t->tm_min / 10;
+  int16_t m2 = t->tm_min % 10;
+  int16_t s1 = t->tm_sec / 10;
+  int16_t s2 = t->tm_sec % 10;
 
-  // Time centered in area leaving room for seconds on the right
-  graphics_draw_text(ctx, time_buf, font_time,
-    GRect(LCD_X, time_y, LCD_W - 34, 50),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  // Center the whole time+seconds group horizontally
+  int16_t cx = LCD_X + (LCD_W - total_w) / 2;
 
-  // Seconds right-aligned, bottom-aligned with time
-  static char sec_buf[4];
-  snprintf(sec_buf, sizeof(sec_buf), "%02d", t->tm_sec);
+  // H1 (blank for hours 1-9, like real F-91W)
+  if (h1 > 0) draw_seg_digit(ctx, h1, cx, time_y, dw, dh, dt);
+  cx += dw + dgap;
 
-  int16_t sec_y = time_y + 24;
-  graphics_draw_text(ctx, sec_buf, font_sec,
-    GRect(LCD_X + LCD_W - 34 - pad, sec_y, 34, 24),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+  // H2
+  draw_seg_digit(ctx, h2, cx, time_y, dw, dh, dt);
+  cx += dw + cgap;
+
+  // Colon
+  draw_seg_colon(ctx, cx, time_y, dh, dt);
+  cx += cw + cgap;
+
+  // M1
+  draw_seg_digit(ctx, m1, cx, time_y, dw, dh, dt);
+  cx += dw + dgap;
+
+  // M2
+  draw_seg_digit(ctx, m2, cx, time_y, dw, dh, dt);
+  cx += dw + spad;
+
+  // Seconds - bottom-aligned with main time
+  int16_t sec_y = time_y + dh - sh;
+  draw_seg_digit(ctx, s1, cx, sec_y, sw, sh, st);
+  cx += sw + sgap;
+  draw_seg_digit(ctx, s2, cx, sec_y, sw, sh, st);
 }
 
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
