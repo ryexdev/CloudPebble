@@ -115,7 +115,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   graphics_fill_rect(ctx, GRect(LCD_X + 2, row3_y + 4, 1, 7), 0, GCornerNone);
 
   // "LIGHT" to the right of the arrow
-  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_context_set_text_color(ctx, COLOR_WHITE);
   graphics_draw_text(ctx, "LIGHT", font_tiny,
     GRect(LCD_X + 8, row3_y, 50, 16),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
@@ -138,7 +138,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   graphics_fill_rect(ctx, GRect(LCD_X + 2, brow1_y + 4, 1, 7), 0, GCornerNone);
 
   // "MODE"
-  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_context_set_text_color(ctx, COLOR_WHITE);
   graphics_draw_text(ctx, "MODE", font_tiny,
     GRect(LCD_X + 8, brow1_y, 50, 16),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
@@ -165,7 +165,7 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   // Row 3: "WATER" left, blue rect with "WR", "RESIST" right
   int16_t brow3_y = brow2_y + 7;
 
-  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_context_set_text_color(ctx, COLOR_WHITE);
   graphics_draw_text(ctx, "WATER", font_tiny,
     GRect(LCD_X, brow3_y, 60, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
@@ -177,13 +177,13 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   int16_t wr_y = brow3_y + 1;
   graphics_context_set_fill_color(ctx, COLOR_CASIO_BLUE);
   graphics_fill_rect(ctx, GRect(wr_x, wr_y, wr_w, wr_h), 0, GCornerNone);
-  graphics_context_set_text_color(ctx, COLOR_WHITE);
+  graphics_context_set_text_color(ctx, COLOR_RED);
   graphics_draw_text(ctx, "WR", font_small,
     GRect(wr_x, wr_y - 2, wr_w, wr_h),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // "RESIST"
-  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_context_set_text_color(ctx, COLOR_WHITE);
   graphics_draw_text(ctx, "RESIST", font_tiny,
     GRect(LCD_X, brow3_y, LCD_W, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
