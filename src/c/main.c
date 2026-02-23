@@ -331,12 +331,12 @@ static void draw_lcd_content(GContext *ctx) {
   cx += secw + secgap;
   draw_seg_digit(ctx, s2, cx, sec_y, secw, sech, sect);
 
-  // AM/PM - text font, above seconds
+  // AM/PM - text font, left side of main time area
   GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
   graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
-    GRect(LCD_X + LCD_W - secw * 2 - secgap - 6, time_y, 30, 16),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+    GRect(LCD_X + 4, time_y, 30, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
