@@ -94,9 +94,6 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   GFont font_tiny = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 
   // "CASIO" top center
-  GSize casio_size = graphics_text_layout_get_content_size(
-    "CASIO", font_small, GRect(0, 0, w, 30),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter);
   graphics_context_set_text_color(ctx, COLOR_WHITE);
   graphics_draw_text(ctx, "CASIO", font_small,
     GRect(0, 6, w, 24),
@@ -178,9 +175,9 @@ static void draw_lcd_content(GContext *ctx) {
     GRect(cx, top_y, 40, 22),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
-  // Date number
-  static char date_buf[4];
-  snprintf(date_buf, sizeof(date_buf), "%02d", t->tm_mday);
+  // Date: month-day (e.g. "1-25") like the real F-91W
+  static char date_buf[8];
+  snprintf(date_buf, sizeof(date_buf), "%d-%02d", t->tm_mon + 1, t->tm_mday);
   graphics_draw_text(ctx, date_buf, font_small,
     GRect(LCD_X + LCD_W - 40, top_y, 32, 22),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
@@ -249,7 +246,7 @@ static void init() {
     .unload = main_window_unload
   });
   window_stack_push(s_main_window, true);
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 }
 
 static void deinit() {
