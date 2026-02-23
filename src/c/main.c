@@ -382,11 +382,12 @@ static void draw_lcd_content(GContext *ctx) {
   cx += secw + secgap;
   draw_seg_digit(ctx, s2, cx, sec_y, secw, sech, sect);
 
-  // AM/PM - text font, left side of main time area
+  // AM/PM - text font, left side, halfway between top row and main time
+  int16_t ampm_y = (top_y + top_row_h + time_y) / 2 - 8;
   GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
   graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
-    GRect(LCD_X + 4, time_y, 30, 16),
+    GRect(LCD_X + 4, ampm_y, 30, 16),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
