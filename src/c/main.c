@@ -179,7 +179,7 @@ static void draw_lcd_content(GContext *ctx) {
   static char date_buf[8];
   snprintf(date_buf, sizeof(date_buf), "%d-%02d", t->tm_mon + 1, t->tm_mday);
   graphics_draw_text(ctx, date_buf, font_small,
-    GRect(LCD_X + LCD_W - 40, top_y, 32, 22),
+    GRect(LCD_X + LCD_W - 64, top_y, 56, 22),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
   // Divider line
