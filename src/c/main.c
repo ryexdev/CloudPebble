@@ -125,29 +125,67 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
     GRect(LCD_X, row3_y, LCD_W, 16),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
-  // Bottom bezel: WATER  WR  RESIST
-  int16_t bot_y = LCD_Y + LCD_H + BLUE_PAD + 8;
+  // === BELOW LCD ===
+  int16_t below_base = LCD_Y + LCD_H + BLUE_PAD;
 
+  // Row 1: Red indicator + "MODE" left, "ALARM ON-OFF/24HR" + red indicator right
+  int16_t brow1_y = below_base + 3;
+
+  // Red indicator (left, small triangle pointing down)
+  graphics_context_set_fill_color(ctx, COLOR_RED);
+  graphics_fill_rect(ctx, GRect(LCD_X, brow1_y + 6, 5, 3), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + 1, brow1_y + 5, 3, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + 2, brow1_y + 4, 1, 7), 0, GCornerNone);
+
+  // "MODE"
+  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_draw_text(ctx, "MODE", font_tiny,
+    GRect(LCD_X + 8, brow1_y, 50, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+
+  // "ALARM ON-OFF/24HR" right-aligned
+  graphics_draw_text(ctx, "ALARM ON\xc2\xb7OFF/24HR", font_tiny,
+    GRect(LCD_X, brow1_y, LCD_W - 8, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+
+  // Red indicator (right side, small triangle pointing down)
+  graphics_context_set_fill_color(ctx, COLOR_RED);
+  graphics_fill_rect(ctx, GRect(LCD_X + LCD_W - 5, brow1_y + 6, 5, 3), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + LCD_W - 4, brow1_y + 5, 3, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + LCD_W - 3, brow1_y + 4, 1, 7), 0, GCornerNone);
+
+  // Row 2: Blue line (same spacing as top)
+  int16_t brow2_y = brow1_y + 17;
+  graphics_context_set_fill_color(ctx, COLOR_BLUE);
+  graphics_fill_rect(ctx,
+    GRect(LCD_X - BLUE_PAD, brow2_y,
+          LCD_W + BLUE_PAD * 2, 4),
+    0, GCornerNone);
+
+  // Row 3: "WATER" left, blue rect with "WR", "RESIST" right
+  int16_t brow3_y = brow2_y + 7;
+
+  graphics_context_set_text_color(ctx, COLOR_DIM);
   graphics_draw_text(ctx, "WATER", font_tiny,
-    GRect(14, bot_y, 60, 20),
+    GRect(LCD_X, brow3_y, 60, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
-  // Red "W"
-  graphics_context_set_text_color(ctx, COLOR_RED);
-  graphics_draw_text(ctx, "W", font_small,
-    GRect(w / 2 - 18, bot_y - 2, 20, 22),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-
-  // Blue "R"
-  graphics_context_set_text_color(ctx, COLOR_CASIO_BLUE);
-  graphics_draw_text(ctx, "R", font_small,
-    GRect(w / 2 + 2, bot_y - 2, 20, 22),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  // Blue rectangle with "WR" centered
+  int16_t wr_w = 28;
+  int16_t wr_h = 16;
+  int16_t wr_x = (w - wr_w) / 2;
+  int16_t wr_y = brow3_y + 1;
+  graphics_context_set_fill_color(ctx, COLOR_CASIO_BLUE);
+  graphics_fill_rect(ctx, GRect(wr_x, wr_y, wr_w, wr_h), 0, GCornerNone);
+  graphics_context_set_text_color(ctx, COLOR_WHITE);
+  graphics_draw_text(ctx, "WR", font_small,
+    GRect(wr_x, wr_y - 2, wr_w, wr_h),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // "RESIST"
   graphics_context_set_text_color(ctx, COLOR_DIM);
   graphics_draw_text(ctx, "RESIST", font_tiny,
-    GRect(w - 74, bot_y, 60, 20),
+    GRect(LCD_X, brow3_y, LCD_W, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 }
 
