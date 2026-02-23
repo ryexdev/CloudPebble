@@ -194,6 +194,13 @@ static void draw_seg_colon(GContext *ctx, int16_t x, int16_t y, int16_t h, int16
   graphics_fill_rect(ctx, GRect(x, y + 3 * q - t, t, t), 0, GCornerNone);
 }
 
+static void draw_seg_dash(GContext *ctx, int16_t x, int16_t y,
+                          int16_t w, int16_t h, int16_t t) {
+  int16_t vl = (h - 3 * t) / 2;
+  int16_t my = y + t + vl;
+  graphics_fill_rect(ctx, GRect(x, my, w, t), 0, GCornerNone);
+}
+
 static void draw_lcd_content(GContext *ctx) {
   time_t temp = time(NULL);
   struct tm *t = localtime(&temp);
@@ -203,13 +210,16 @@ static void draw_lcd_content(GContext *ctx) {
   graphics_context_set_text_color(ctx, COLOR_LCD_FG);
   graphics_context_set_fill_color(ctx, COLOR_LCD_FG);
 
-  // Main digit sizes
-  int16_t dw = 18, dh = 38, dt = 4;
+  // Main time digit sizes (bigger, bolder)
+  int16_t dw = 24, dh = 42, dt = 5;
   // Seconds digit sizes
-  int16_t sw = 10, sh = 20, st = 2;
+  int16_t sw = 14, sh = 24, st = 3;
+  // Date digit sizes
+  int16_t ddw = 9, ddh = 16, ddt = 2;
   // Spacing
-  int16_t dgap = 2, cgap = 3, cw = 4;
-  int16_t sgap = 1, spad = 5;
+  int16_t dgap = 2, cgap = 2, cw = 5;
+  int16_t sgap = 1, spad = 4;
+  int16_t ddgap = 1, dash_w = 6;
 
   // Total width: HH:MM + padding + SS
   int16_t time_w = 4 * dw + 2 * dgap + 2 * cgap + cw;
@@ -223,7 +233,7 @@ static void draw_lcd_content(GContext *ctx) {
   int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
 
   // === TOP ROW ===
-  // Day of week - centered
+  // Day of week - centered (text font since these are letters)
   graphics_draw_text(ctx, DAYS[t->tm_wday], font_label,
     GRect(LCD_X, top_y, LCD_W, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
@@ -233,12 +243,25 @@ static void draw_lcd_content(GContext *ctx) {
     GRect(LCD_X + 4, top_y, 30, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 
-  // Date - right side
-  static char date_buf[8];
-  snprintf(date_buf, sizeof(date_buf), "%d-%02d", t->tm_mon + 1, t->tm_mday);
-  graphics_draw_text(ctx, date_buf, font_label,
-    GRect(LCD_X + LCD_W - 68, top_y, 64, 20),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+  // Date - right side, 7-segment digits
+  int16_t month = t->tm_mon + 1;
+  int16_t mday = t->tm_mday;
+  int16_t m_digits = month >= 10 ? 2 : 1;
+  int16_t date_total_w = (m_digits + 2) * ddw + dash_w + (m_digits + 2) * ddgap;
+  int16_t date_y = top_y + (top_row_h - ddh) / 2;
+  int16_t dx = LCD_X + LCD_W - 6 - date_total_w;
+
+  if (month >= 10) {
+    draw_seg_digit(ctx, month / 10, dx, date_y, ddw, ddh, ddt);
+    dx += ddw + ddgap;
+  }
+  draw_seg_digit(ctx, month % 10, dx, date_y, ddw, ddh, ddt);
+  dx += ddw + ddgap;
+  draw_seg_dash(ctx, dx, date_y, dash_w, ddh, ddt);
+  dx += dash_w + ddgap;
+  draw_seg_digit(ctx, mday / 10, dx, date_y, ddw, ddh, ddt);
+  dx += ddw + ddgap;
+  draw_seg_digit(ctx, mday % 10, dx, date_y, ddw, ddh, ddt);
 
   // Divider line
   int16_t div_y = top_y + top_row_h;
@@ -283,7 +306,7 @@ static void draw_lcd_content(GContext *ctx) {
   draw_seg_digit(ctx, m2, cx, time_y, dw, dh, dt);
   cx += dw + spad;
 
-  // Seconds - bottom-aligned with main time
+  // Seconds - bottom-aligned with main time, 7-segment
   int16_t sec_y = time_y + dh - sh;
   draw_seg_digit(ctx, s1, cx, sec_y, sw, sh, st);
   cx += sw + sgap;
