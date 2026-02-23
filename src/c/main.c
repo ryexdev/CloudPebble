@@ -255,13 +255,6 @@ static void draw_lcd_content(GContext *ctx) {
   int16_t char_y = top_y + (top_row_h - th) / 2;
 
   // === TOP ROW ===
-  // AM/PM - left side (text font)
-  GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-  graphics_context_set_text_color(ctx, COLOR_LCD_FG);
-  graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
-    GRect(LCD_X + 4, top_y, 30, top_row_h),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-
   // Day of week - centered, 7-segment
   const char *day = DAYS[t->tm_wday];
   int16_t day_w = 2 * tw + tgap;
@@ -337,6 +330,13 @@ static void draw_lcd_content(GContext *ctx) {
   draw_seg_digit(ctx, s1, cx, sec_y, secw, sech, sect);
   cx += secw + secgap;
   draw_seg_digit(ctx, s2, cx, sec_y, secw, sech, sect);
+
+  // AM/PM - text font, above seconds
+  GFont font_label = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  graphics_context_set_text_color(ctx, COLOR_LCD_FG);
+  graphics_draw_text(ctx, t->tm_hour < 12 ? "AM" : "PM", font_label,
+    GRect(LCD_X + LCD_W - secw * 2 - secgap - 6, time_y, 30, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 }
 
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
