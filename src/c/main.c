@@ -235,8 +235,8 @@ static void draw_lcd_content(GContext *ctx) {
   int16_t dw = 24, dh = 42, dt = 5;
   // Seconds digit sizes
   int16_t secw = 14, sech = 24, sect = 3;
-  // Top row character sizes (day, date, AM/PM)
-  int16_t tw = 8, th = 14, tt = 2;
+  // Top row character sizes (day, date)
+  int16_t tw = 10, th = 17, tt = 2;
   // Spacing
   int16_t dgap = 2, cgap = 2, colw = 5;
   int16_t secgap = 1, secpad = 4;
@@ -248,7 +248,7 @@ static void draw_lcd_content(GContext *ctx) {
   int16_t total_w = time_w + secpad + secs_w;
 
   // Vertical centering
-  int16_t top_row_h = 18;
+  int16_t top_row_h = 22;
   int16_t div_gap = 4;
   int16_t content_h = top_row_h + div_gap + dh;
   int16_t top_y = LCD_Y + (LCD_H - content_h) / 2;
@@ -282,15 +282,8 @@ static void draw_lcd_content(GContext *ctx) {
   dx += tw + tgap;
   draw_seg_digit(ctx, mday % 10, dx, char_y, tw, th, tt);
 
-  // Divider line
-  int16_t div_y = top_y + top_row_h;
-  graphics_context_set_stroke_color(ctx, COLOR_LCD_FG);
-  graphics_draw_line(ctx,
-    GPoint(LCD_X + 3, div_y),
-    GPoint(LCD_X + LCD_W - 3, div_y));
-
   // === MAIN TIME (7-segment, centered) ===
-  int16_t time_y = div_y + div_gap;
+  int16_t time_y = top_y + top_row_h + div_gap;
 
   // 12-hour format always
   int16_t hour = t->tm_hour % 12;
