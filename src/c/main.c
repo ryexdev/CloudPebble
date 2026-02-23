@@ -90,30 +90,40 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
   int16_t w = bounds.size.w;
   int16_t h = bounds.size.h;
 
-  GFont font_small = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  GFont font_casio = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  GFont font_small = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
   GFont font_tiny = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 
-  // "CASIO" top center
+  // Row 1: "CASIO" upper-left, "F-91W" upper-right
   graphics_context_set_text_color(ctx, COLOR_WHITE);
-  graphics_draw_text(ctx, "CASIO", font_small,
-    GRect(0, 6, w, 24),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-
-  // "LIGHT" top left
-  graphics_context_set_text_color(ctx, COLOR_DIM);
-  graphics_draw_text(ctx, "LIGHT", font_tiny,
-    GRect(10, 8, 60, 20),
+  graphics_draw_text(ctx, "CASIO", font_casio,
+    GRect(LCD_X, 6, LCD_W / 2, 24),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-
-  // "F-91W" top right
-  graphics_draw_text(ctx, "F-91W", font_tiny,
-    GRect(w - 70, 8, 60, 20),
+  graphics_draw_text(ctx, "F-91W", font_small,
+    GRect(LCD_X + LCD_W / 2, 10, LCD_W / 2, 20),
     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
-  // "ALARM CHRONOGRAPH" below top row
+  // Row 2: Blue stripe is the blue border drawn in draw_lcd_panel
+
+  // Row 3: Red arrow + "LIGHT" on left, "ALARM CHRONOGRAPH" on right
+  int16_t row3_y = 26;
+
+  // Small red left-pointing arrow (triangle approximation using rects)
+  graphics_context_set_fill_color(ctx, COLOR_RED);
+  graphics_fill_rect(ctx, GRect(LCD_X, row3_y + 6, 5, 3), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + 1, row3_y + 5, 3, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(LCD_X + 2, row3_y + 4, 1, 7), 0, GCornerNone);
+
+  // "LIGHT" to the right of the arrow
+  graphics_context_set_text_color(ctx, COLOR_DIM);
+  graphics_draw_text(ctx, "LIGHT", font_tiny,
+    GRect(LCD_X + 8, row3_y, 50, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+
+  // "ALARM CHRONOGRAPH" right side
   graphics_draw_text(ctx, "ALARM CHRONOGRAPH", font_tiny,
-    GRect(0, 32, w, 20),
-    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    GRect(LCD_X, row3_y, LCD_W, 16),
+    GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 
   // Bottom bezel: WATER  WR  RESIST
   int16_t bot_y = LCD_Y + LCD_H + BLUE_PAD + 8;
@@ -142,8 +152,14 @@ static void draw_bezel_text(GContext *ctx, GRect bounds) {
 }
 
 static void draw_lcd_panel(GContext *ctx) {
-  // Blue border
+  // Blue stripe between CASIO row and LIGHT row
   graphics_context_set_fill_color(ctx, COLOR_BLUE);
+  graphics_fill_rect(ctx,
+    GRect(LCD_X - BLUE_PAD, 23,
+          LCD_W + BLUE_PAD * 2, 4),
+    0, GCornerNone);
+
+  // Blue border around LCD
   graphics_fill_rect(ctx,
     GRect(LCD_X - BLUE_PAD, LCD_Y - BLUE_PAD,
           LCD_W + BLUE_PAD * 2, LCD_H + BLUE_PAD * 2),
